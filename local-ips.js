@@ -2,9 +2,23 @@
 
 var fs = require('fs');
 
-var json_path = './local-ips.json';
+var json_path = './ips.json';
 
-var locations = ['北京','天津','河北','山西','内蒙古','辽宁','吉林','黑龙江','上海','江苏','浙江','安徽','福建','江西','山东','河南','湖北','湖南','广东','广西','海南','重庆','四川','贵州','云南','西藏','陕西','甘肃','青海','宁夏','新疆'];
+function randomInt(arr){ 
+    var under = arr[0];
+    var over = arr[1];
+    return parseInt(Math.random()*(over-under+1) + under);
+}
+
+function load_data(location){
+    if(typeof(ips_data)!="undefined"){
+        return ips_data;
+    }else{
+        var json = fs.readFileSync(json_path,'utf-8');
+        ips_data = JSON.parse(json);
+        return ips_data;
+    }
+}
 
 exports.load = function(location,callback){
     fs.readFile(json_path,'utf-8', function(err,json){
@@ -12,45 +26,88 @@ exports.load = function(location,callback){
             throw err;
         }else{
             var data = JSON.parse(json);
-            if (locations.indexOf(location)>-1){
-                callback(data[location]);
-            }else if(location=="国内"){
+            var provinces = data["provinces"]; 
+            var cities = data["cities"];
+            var province_list = Object.keys(provinces);
+            var city_list = Object.keys(cities);
+            if (province_list.indexOf(location)>-1){
+                callback(provinces[location]);
+            }else if (city_list.indexOf(location)>-1){
+                callback(cities[location])
+            }else if(location=="国内" || location=="中国"){
                 var data_all = [];
-                for (var key in data){
-                    data_all = data_all.concat(data[key]);
+                for (var key in provinces){
+                    data_all = data_all.concat(provinces[key]);
                 }
                 callback(data_all);
+            }else{
+                console.log("[local-ips] 不支持的区域名称。");
+                callback(null);
             }
         }
     })
 }
 
 exports.loadSync = function(location){
-    console.log(location)
-    var json = fs.readFileSync(json_path,'utf-8');
-    var data = JSON.parse(json);
-    if (locations.indexOf(location)>-1){
-        return(data[location]);
-    }else if(location=="国内"){
+    var data = load_data();
+    var provinces = data["provinces"]; 
+    var cities = data["cities"];
+    var province_list = Object.keys(provinces);
+    var city_list = Object.keys(cities);
+    if (province_list.indexOf(location)>-1){
+        return(provinces[location]);
+    }else if (city_list.indexOf(location)>-1){
+        return(cities[location])
+    }else if(location=="国内" || location=="中国"){
         var data_all = [];
-        for (var key in data){
-            data_all = data_all.concat(data[key]);
-            console.log(data_all);
+        for (var key in provinces){
+            data_all = data_all.concat(provinces[key]);
         }
         return(data_all);
     }else{
-        console.log("[local-ips] 查询位置不在列表中")
+        console.log("[local-ips] 不支持的区域名称。")
+        return null
     }
 }
 
-exports.locations = function(){
-    var locations_all = locations.slice();
-    locations_all.push("国内");
-    return locations_all;
+exports.loadRandom = function(location){
+    var ips = exports.loadSync(location);
+    if (ips!==null){
+        var index = Math.floor(Math.random()*ips.length);
+        var ip = ips[index] + "." + randomInt([0,255]).toString();
+        return ip;
+    }else{
+        return null;
+    }
 }
 
-//test
-/*exports.load("上海",function(list){
-    console.log(list);
-});*/
-/*console.log(exports.loadSync("国内"));*/
+exports.cities = function(){
+    var data = load_data();
+    var cities = data["cities"];
+    var city_list = Object.keys(cities);
+    return city_list;
+}
+
+exports.provinces = function(){
+    var data = load_data();
+    var provinces = data["provinces"]; 
+    var province_list = Object.keys(provinces);
+    return province_list;
+}
+
+
+// test
+if(!module.parent){
+    /*exports.load("广州",function(list){
+        console.log(list);
+    });
+    */
+    var provinces = exports.provinces();
+    console.log(provinces);
+    console.log(provinces.length);
+    var cities = exports.cities();
+    console.log(cities);
+    console.log(cities.length);
+    var ipt = exports.loadSync("上海");
+    console.log(exports.loadRandom("上海"));
+}

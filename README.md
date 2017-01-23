@@ -6,15 +6,21 @@
 ```
 var local_ips = require('./local-ips.js');
 
-var locations = local_ips.locations(); //查看可选区域
-local_ips.load("上海",function(list){
+var locations = local_ips.provinces(); //获取可选省份
+var locations = local_ips.cities(); //获取可选城市
+
+local_ips.load("上海",function(list){ //异步获取区域ip分段列表
     console.log(list); 
 });
-console.log(local_ips.loadSync("国内"));
+console.log(local_ips.loadSync("中国")); //同步获取区域ip分段列表
+
+console.log(local_ips.loadRandom("广州")); //同步获取区域中一个随机ip
 ```
 
 ## 注意
++ ip分段指IPv4地址以"."划分四个分段的前三段。
 + 包含同步方法和异步方法。
 + 获取列表储存了ipv4地址前两段，后两段可以随机生成。
-+ 地域列表是“国内”和省份，不支持地级市。
-+ 目前只包含31个大陆范围的省、直辖市、自治区。
++ 地域列表包括“中国”、省级单位、地级市，另外还有北京海淀区等少数区划。
++ “provinces”包含31个大陆范围的省、直辖市、自治区。
++ “cities”包含共428个地级市及少数区划。并非中国所有地级市都包含其中。
