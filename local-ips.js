@@ -81,6 +81,22 @@ exports.loadRandom = function(location){
     }
 }
 
+exports.matchLocation = function(string){
+    var city_list = exports.cities();
+    var province_list = exports.provinces();
+    for (var i in city_list){
+        if (string.indexOf(city_list[i])>-1){
+            return city_list[i];
+        }
+    }
+    for (var i in province_list){
+        if (string.indexOf(province_list[i])>-1){
+            return province_list[i];
+        }
+    }
+    return "无匹配";
+}
+
 exports.cities = function(){
     var data = load_data();
     var cities = data["cities"];
@@ -110,4 +126,5 @@ if(!module.parent){
     console.log(cities.length);
     var ipt = exports.loadSync("上海");
     console.log(exports.loadRandom("上海"));
+    console.log(exports.matchLocation("湖南省长沙市新天地科技有限公司"));
 }
