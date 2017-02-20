@@ -20,35 +20,7 @@ function load_data(location){
     }
 }
 
-exports.load = function(location,callback){
-    fs.readFile(json_path,'utf-8', function(err,json){
-        if(err){
-            throw err;
-        }else{
-            var data = JSON.parse(json);
-            var provinces = data["provinces"]; 
-            var cities = data["cities"];
-            var province_list = Object.keys(provinces);
-            var city_list = Object.keys(cities);
-            if (province_list.indexOf(location)>-1){
-                callback(provinces[location]);
-            }else if (city_list.indexOf(location)>-1){
-                callback(cities[location])
-            }else if(location=="国内" || location=="中国"){
-                var data_all = [];
-                for (var key in provinces){
-                    data_all = data_all.concat(provinces[key]);
-                }
-                callback(data_all);
-            }else{
-                console.log("[local-ips] 不支持的区域名称。");
-                callback(null);
-            }
-        }
-    })
-}
-
-exports.loadSync = function(location){
+exports.load = function(location){
     var data = load_data();
     var provinces = data["provinces"]; 
     var cities = data["cities"];
@@ -71,7 +43,7 @@ exports.loadSync = function(location){
 }
 
 exports.loadRandom = function(location){
-    var ips = exports.loadSync(location);
+    var ips = exports.load(location);
     if (ips!==null){
         var index = Math.floor(Math.random()*ips.length);
         var ip = ips[index] + "." + randomInt([0,255]).toString();
@@ -79,6 +51,20 @@ exports.loadRandom = function(location){
     }else{
         return null;
     }
+}
+
+exports.cities = function(){
+    var data = load_data();
+    var cities = data["cities"];
+    var city_list = Object.keys(cities);
+    return city_list;
+}
+
+exports.provinces = function(){
+    var data = load_data();
+    var provinces = data["provinces"]; 
+    var province_list = Object.keys(provinces);
+    return province_list;
 }
 
 exports.matchLocation = function(string){
@@ -97,34 +83,36 @@ exports.matchLocation = function(string){
     return "无匹配";
 }
 
-exports.cities = function(){
-    var data = load_data();
-    var cities = data["cities"];
-    var city_list = Object.keys(cities);
-    return city_list;
-}
-
-exports.provinces = function(){
-    var data = load_data();
-    var provinces = data["provinces"]; 
-    var province_list = Object.keys(provinces);
-    return province_list;
-}
-
+exports.where = function(ip){
+    var ipt = ip.substr(0,ip.lastIndexOf("."));
+    console.log(ipt)
+    var city_list = exports.cities();
+    var province_list = exports.provinces();
+    for(var i in city_list){
+        var ipt_list = exports.load(city_list[i]);
+        if (ipt_list.indexOf(ipt)>-1){
+            return city_list[i];
+        }
+    }
+    for(var i in province_list){
+        var ipt_list = exports.load(province_list[i]);
+        if (ipt_list.indexOf(ipt)>-1){
+            return province_list[i];
+        }
+    }
+    return null    
+} 
 
 // test
 if(!module.parent){
-    /*exports.load("广州",function(list){
-        console.log(list);
-    });
-    */
     var provinces = exports.provinces();
     console.log(provinces);
     console.log(provinces.length);
     var cities = exports.cities();
     console.log(cities);
     console.log(cities.length);
-    var ipt = exports.loadSync("上海");
+    var ipt = exports.load("上海");
     console.log(exports.loadRandom("上海"));
+    console.log(exports.where("221.237.82.101"));
     console.log(exports.matchLocation("湖南省长沙市新天地科技有限公司"));
 }
